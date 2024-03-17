@@ -32,9 +32,10 @@ class Daggerverse:
                     ["apk", "add", "--no-cache", "gcc", "libc-dev", "linux-headers"]
                 )
                 .with_exec(["python", "--version"])
-                # .with_exec(["pip","install","wheel"])
-                # .with_exec(["pip","install","-U","-r","test-requirements.txt"])
+                .with_exec(["pip","install","wheel"])
                 .with_exec(["pip", "install", "mypy"])
+                .with_exec(["pip","install","-U","-r","test-requirements.txt"])
+                .with_exec(["pip","install","-U","-r","requirements.txt"])
                 .with_exec(["mypy", "--non-interactive", "--install-types", "."])
             ).stdout()
         )
