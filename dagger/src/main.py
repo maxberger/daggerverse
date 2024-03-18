@@ -21,21 +21,27 @@ from dagger import dag, function, object_type
 class Daggerverse:
     @function
     async def mypy(self, src: dagger.Directory) -> str:
-        return (
-            await (
-                dag.container()
-                .from_("python:alpine")
-                .with_mounted_directory("/mnt", src)
-                .with_workdir("/mnt")
-                .with_exec(["pip", "install", "mypy"])
-                .with_exec(
-                    ["apk", "add", "--no-cache", "gcc", "libc-dev", "linux-headers"]
-                )
-                .with_exec(["python", "--version"])
-                .with_exec(["pip","install","wheel"])
-                .with_exec(["pip", "install", "mypy"])
-                .with_exec(["pip","install","-U","-r","test-requirements.txt"])
-                .with_exec(["pip","install","-U","-r","requirements.txt"])
-                .with_exec(["mypy", "--non-interactive", "--install-types", "."])
-            ).stdout()
-        )
+        return await (
+            dag.container()
+            .from_("python:alpine")
+            .with_mounted_directory("/mnt", src)
+            .with_workdir("/mnt")
+            .with_exec(["pip", "install", "mypy"])
+            .with_exec(
+                [
+                    "apk",
+                    "add",
+                    "--no-cache",
+                    "gcc",
+                    "libc-dev",
+                    "linux-headers",
+                    "libffi-dev",
+                ]
+            )
+            .with_exec(["python", "--version"])
+            .with_exec(["pip", "install", "wheel"])
+            .with_exec(["pip", "install", "mypy"])
+            .with_exec(["pip", "install", "-U", "-r", "test-requirements.txt"])
+            .with_exec(["pip", "install", "-U", "-r", "requirements.txt"])
+            .with_exec(["mypy", "--non-interactive", "--install-types", "."])
+        ).stdout()
