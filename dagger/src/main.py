@@ -19,14 +19,14 @@ from dagger import dag, function, object_type
 
 @object_type
 class Daggerverse:
+
     @function
-    async def mypy(self, src: dagger.Directory) -> str:
-        return await (
+    def python_container(self, src: dagger.Directory) -> dagger.Container:
+        return (
             dag.container()
             .from_("python:alpine")
             .with_mounted_directory("/mnt", src)
             .with_workdir("/mnt")
-            .with_exec(["pip", "install", "mypy"])
             .with_exec(
                 [
                     "apk",
@@ -39,9 +39,15 @@ class Daggerverse:
                 ]
             )
             .with_exec(["python", "--version"])
-            .with_exec(["pip", "install", "wheel"])
-            .with_exec(["pip", "install", "mypy"])
+            .with_exec(["pip", "install", "wheel", "mypy"])
             .with_exec(["pip", "install", "-U", "-r", "test-requirements.txt"])
             .with_exec(["pip", "install", "-U", "-r", "requirements.txt"])
+        )
+
+    @function
+    async def mypy(self, src: dagger.Directory) -> str:
+        return (
+            await self.python_container(src)
             .with_exec(["mypy", "--non-interactive", "--install-types", "."])
-        ).stdout()
+            .stdout()
+        )
