@@ -51,3 +51,15 @@ class Daggerverse:
             .with_exec(["mypy", "--non-interactive", "--install-types", "."])
             .stdout()
         )
+
+    @function
+    async def pytest(self, src: dagger.Directory) -> str:
+        return (
+            await self.python_container(src)
+            .with_exec(["python", "-m", "pytest", "tests/unit", "-rA"])
+            .stdout()
+        )
+
+    @function
+    async def python_test(self, src: dagger.Directory) -> str:
+        return await self.mypy(src) + await self.pytest(src)
