@@ -13,6 +13,9 @@ rest is a long description with more detail on the module's purpose or usage,
 if appropriate. All modules should have a short description.
 """
 
+import os
+import sys
+
 import dagger
 from dagger import dag, function, object_type
 
@@ -40,14 +43,26 @@ class Daggerverse:
             )
             .with_exec(["python", "--version"])
             .with_exec(["pip", "install", "wheel", "mypy"])
+        )
+
+    @function
+    def python_test_container(self, src: dagger.Directory) -> dagger.Container:
+        return (
+            self.python_container(src)
             .with_exec(["pip", "install", "-U", "-r", "test-requirements.txt"])
             .with_exec(["pip", "install", "-U", "-r", "requirements.txt"])
         )
 
     @function
+    def python_prod_container(self, src: dagger.Directory) -> dagger.Container:
+        return self.python_container(src).with_exec(
+            ["pip", "install", "-U", "-r", "requirements.txt"]
+        )
+
+    @function
     async def mypy(self, src: dagger.Directory) -> str:
         return (
-            await self.python_container(src)
+            await self.python_test_container(src)
             .with_exec(["mypy", "--non-interactive", "--install-types", "."])
             .stdout()
         )
@@ -55,7 +70,7 @@ class Daggerverse:
     @function
     async def pytest(self, src: dagger.Directory) -> str:
         return (
-            await self.python_container(src)
+            await self.python_test_container(src)
             .with_exec(["python", "-m", "pytest", "tests/unit", "-rA"])
             .stdout()
         )
@@ -63,3 +78,30 @@ class Daggerverse:
     @function
     async def python_test(self, src: dagger.Directory) -> str:
         return await self.mypy(src) + await self.pytest(src)
+
+    @function
+    async def python_release(
+        self,
+        src: dagger.Directory,
+        twine_username: dagger.Secret,
+        twine_password: dagger.Secret,
+    ) -> str:
+        return (
+            await self.python_prod_container(src)
+            .with_exec(["pip", "install", "-U", "build", "twine"])
+            .with_exec(["python", "-m", "build"])
+            .with_secret_variable("TWINE_PASSWORD", twine_password)
+            .with_secret_variable("TWINE_USERNAME", twine_username)
+            .with_exec(
+                [
+                    "python",
+                    "-m",
+                    "twine",
+                    "upload",
+                    "--repository-url",
+                    "https://gitea.bergernet.de/api/packages/max/pypi",
+                    "dist/*",
+                ]
+            )
+            .stdout()
+        )
