@@ -36,6 +36,7 @@ class Daggerverse:
                     "add",
                     "--no-cache",
                     "gcc",
+                    "git",
                     "libc-dev",
                     "linux-headers",
                     "libffi-dev",
