@@ -50,6 +50,7 @@ class Daggerverse:
     def python_test_container(self, src: dagger.Directory) -> dagger.Container:
         return (
             self.python_container(src)
+            .with_env_variable("CFLAGS", "-Wno-int-conversion")
             .with_exec(["pip", "install", "-U", "-r", "test-requirements.txt"])
             .with_exec(["pip", "install", "-U", "-r", "requirements.txt"])
         )
