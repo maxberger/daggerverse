@@ -57,8 +57,10 @@ class Daggerverse:
 
     @function
     def python_prod_container(self, src: dagger.Directory) -> dagger.Container:
-        return self.python_container(src).with_exec(
-            ["pip", "install", "-U", "-r", "requirements.txt"]
+        return (
+            self.python_container(src)
+            .with_env_variable("CFLAGS", "-Wno-int-conversion")
+            .with_exec(["pip", "install", "-U", "-r", "requirements.txt"])
         )
 
     @function
